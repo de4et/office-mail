@@ -1,0 +1,41 @@
+package app
+
+import (
+	"context"
+	"log/slog"
+	"strings"
+
+	pg "github.com/de4et/office-mail/pkg/postgres"
+	"github.com/de4et/office-mail/services/mail-worker/internal/adapters/kafka"
+	"github.com/de4et/office-mail/services/mail-worker/internal/adapters/postgres"
+	"github.com/de4et/office-mail/services/mail-worker/internal/usecase"
+)
+
+func Run(config Config) {
+	ctx := context.Background()
+
+	pgClient := pg.MustGetPostgresqlClient(pg.Config{
+		Host:     config.DB_HOST,
+		Port:     config.DB_PORT,
+		Username: config.DB_USERNAME,
+		Password: config.DB_PASSWORD,
+		DbName:   config.DB_DATABASE,
+	})
+
+	if err := pgClient.Ping(); err != nil {
+		panic("couldn't ping pgClient")
+	}
+
+	slog.InfoContext(ctx, "Successfully set up pg client!")
+
+	transactor := pg.NewPostgresqlTransactor(pgClient)
+	mailRep := postgres.NewPostgresqlMailRepository(pgClient)
+	outboxRep := postgres.NewPostgresqlOutboxRepository(pgClient)
+	kafkaPublisher := kafka.MustGetKafkaTaskPublisher(kafka.Config{
+		Addresses: strings.Split(config.KAFKA_ADDRESSES, ","),
+		MailTopic: config.KAFKA_MAIL_TOPIC,
+	})
+
+	outboxWorkerUsecase := usecase.NewOutboxWorkerUsecase(transactor, mailRep, outboxRep, kafkaPublisher)
+	outboxWorkerUsecase.Run(ctx)
+}
