@@ -37,7 +37,7 @@ func (h *SendHandler) Handle(c *gin.Context) {
 	}
 
 	if err := h.sendUC.Send(
-		c,
+		c.Request.Context(),
 		domain.Mail{
 			To:   domain.Address(req.To),
 			From: domain.Address(req.From),

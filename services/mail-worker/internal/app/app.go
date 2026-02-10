@@ -5,7 +5,9 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/de4et/office-mail/pkg/logger"
 	pg "github.com/de4et/office-mail/pkg/postgres"
+	"github.com/de4et/office-mail/pkg/tracer"
 	"github.com/de4et/office-mail/services/mail-worker/internal/adapters/kafka"
 	"github.com/de4et/office-mail/services/mail-worker/internal/adapters/postgres"
 	"github.com/de4et/office-mail/services/mail-worker/internal/usecase"
@@ -13,6 +15,13 @@ import (
 
 func Run(config Config) {
 	ctx := context.Background()
+	logger.SetupLog("", slog.LevelInfo)
+
+	tp, err := tracer.NewTraceProvider("mail-worker")
+	if err != nil {
+		panic(err)
+	}
+	defer tp.Shutdown(ctx)
 
 	pgClient := pg.MustGetPostgresqlClient(pg.Config{
 		Host:     config.DB_HOST,

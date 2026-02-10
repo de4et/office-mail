@@ -2,11 +2,13 @@ package postgres
 
 import (
 	"context"
+	"database/sql"
 	_ "embed"
 
 	"github.com/de4et/office-mail/pkg/postgres"
 	"github.com/de4et/office-mail/services/mail-worker/internal/adapters/postgres/dto"
 	"github.com/de4et/office-mail/services/mail-worker/internal/domain"
+	"github.com/de4et/office-mail/services/mail-worker/internal/usecase"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -34,12 +36,16 @@ func (rep *PostgresqlOutboxRepository) GetFirstAvailableTask(ctx context.Context
 		getFirstAvailableTaskQuery,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return domain.OutboxTask{}, usecase.ErrNoTasks
+		}
 		return domain.OutboxTask{}, err
 	}
 
 	return domain.OutboxTask{
-		ID:          resp.ID,
-		AggregateID: resp.AggregateID,
+		ID:           resp.ID,
+		AggregateID:  resp.AggregateID,
+		TraceContext: resp.TraceContext,
 	}, nil
 }
 

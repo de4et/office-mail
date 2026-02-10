@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log/slog"
 
+	"github.com/de4et/office-mail/pkg/logger"
 	pg "github.com/de4et/office-mail/pkg/postgres"
+	"github.com/de4et/office-mail/pkg/tracer"
 	"github.com/de4et/office-mail/services/mail-gateway/internal/adapters/postgres"
 	"github.com/de4et/office-mail/services/mail-gateway/internal/controller"
 	"github.com/de4et/office-mail/services/mail-gateway/internal/usecase"
@@ -13,6 +15,14 @@ import (
 
 func Run(config Config) {
 	ctx := context.Background()
+
+	logger.SetupLog("", slog.LevelDebug)
+
+	tp, err := tracer.NewTraceProvider("mail-gateway")
+	if err != nil {
+		panic(err)
+	}
+	defer tp.Shutdown(ctx)
 
 	pgClient := pg.MustGetPostgresqlClient(pg.Config{
 		Host:     config.DB_HOST,
@@ -35,7 +45,6 @@ func Run(config Config) {
 	sendUC := usecase.NewSendMailUsecase(transactor, mailRep, outboxRep)
 	controller := controller.SetupRoutes(ctx, sendUC)
 
-	fmt.Printf("config: %v\n", config)
 	listenAddr := fmt.Sprintf(":%d", config.PORT)
 	controller.Listen(listenAddr)
 }

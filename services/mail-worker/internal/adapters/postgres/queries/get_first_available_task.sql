@@ -1,6 +1,7 @@
 select
   id,
-  aggregate_id
+  aggregate_id,
+  trace_context
 from
   outbox
 where

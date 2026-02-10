@@ -1,6 +1,7 @@
 package domain
 
 type OutboxTask struct {
-	ID          int
-	AggregateID int
+	ID           int
+	AggregateID  int
+	TraceContext []byte
 }

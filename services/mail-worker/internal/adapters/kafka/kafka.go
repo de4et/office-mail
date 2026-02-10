@@ -9,6 +9,8 @@ import (
 
 	"github.com/confluentinc/confluent-kafka-go/v2/kafka"
 	"github.com/de4et/office-mail/services/mail-worker/internal/domain"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/propagation"
 )
 
 const (
@@ -39,6 +41,18 @@ func MustGetKafkaTaskPublisher(config Config) *KafkaTaskPublisher {
 }
 
 func (p *KafkaTaskPublisher) PublishMailTask(ctx context.Context, task domain.OutboxTask, mail domain.Mail) error {
+	headers := make([]kafka.Header, 0)
+
+	carrier := propagation.MapCarrier{}
+	otel.GetTextMapPropagator().Inject(ctx, carrier)
+
+	for k, v := range carrier {
+		headers = append(headers, kafka.Header{
+			Key:   k,
+			Value: []byte(v),
+		})
+	}
+
 	kafkaMsg := &kafka.Message{
 		TopicPartition: kafka.TopicPartition{
 			Topic:     &p.topic,
@@ -46,6 +60,7 @@ func (p *KafkaTaskPublisher) PublishMailTask(ctx context.Context, task domain.Ou
 		},
 		Value:     []byte(p.prepareMessage(task, mail)),
 		Timestamp: time.Now(),
+		Headers:   headers,
 	}
 
 	kafkaChan := make(chan kafka.Event)
