@@ -1,0 +1,45 @@
+---
+# tasks file for zookeeper
+- name: Copy Zookeeper Docker Compose file
+  template:
+    src: zookeeper-docker-compose.yml
+    dest: /opt/zookeeper-docker-compose.yml
+    mode: "0644"
+
+- name: Create Zookeeper data directory
+  file:
+    path: "{{ zookeeper_data_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create Zookeeper datalog directory
+  file:
+    path: "{{ zookeeper_datalog_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Create myid file
+  copy:
+    content: "{{ groups['zookeeper'].index(inventory_hostname) + 1 }}"
+    dest: "{{ zookeeper_data_dir }}/myid"
+    mode: "0644"
+
+- name: Start Zookeeper service
+  community.docker.docker_compose_v2:
+    project_src: /opt/
+    files: zookeeper-docker-compose.yml
+    wait: true
+    wait_timeout: 15
+  register: output
+
+- name: Verify that zookeeper is running
+  ansible.builtin.assert:
+    that:
+      - zookeeper_container.State == 'running'
+  vars:
+    zookeeper_container: >-
+      {{ output.containers | selectattr("Service", "equalto", "zookeeper") | first }}
+
+- name: Pause for 20 seconds to allow Zookeeper to initialize
+  pause:
+    seconds: 20

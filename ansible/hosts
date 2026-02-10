@@ -1,0 +1,15 @@
+[vms]
+vm1 ansible_host=192.168.122.217
+vm2 ansible_host=192.168.122.93
+vm3 ansible_host=192.168.122.250
+
+[kafka]
+vm1
+vm2
+vm3
+
+[zookeeper]
+vm2
+
+[kafka-ui]
+vm1

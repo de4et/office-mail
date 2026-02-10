@@ -1,0 +1,14 @@
+---
+- name: Check if Zookeeper is listening on the specified port
+  ansible.builtin.shell: "nc -zv localhost {{ zookeeper_client_port }}"
+  register: zk_port_status
+  ignore_errors: yes
+
+- name: Display Zookeeper port status
+  ansible.builtin.debug:
+    var: zk_port_status.stdout
+
+- name: Fail if Zookeeper is not listening on the specified port
+  ansible.builtin.fail:
+    msg: "Zookeeper is not listening on port {{ zookeeper_client_port }} on {{ inventory_hostname }}"
+  when: zk_port_status.rc != 0

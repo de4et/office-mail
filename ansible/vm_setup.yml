@@ -1,0 +1,42 @@
+- name: Init setup
+  hosts: vms
+  become: yes
+
+  tasks:
+    - name: install apt pkgs
+      apt:
+        name:
+          - btop
+        state: present
+        update_cache: yes
+
+- name: Install docker
+  hosts: vms
+  gather_facts: yes
+  roles:
+    - role: geerlingguy.docker
+      vars:
+        - docker_users: [de4et]
+
+- name: Deploy zookeeper
+  hosts: zookeeper
+  become: yes
+  roles:
+    - zookeeper
+
+- hosts: zookeeper
+  become: yes
+  tasks:
+    - include_tasks: zookeeper/tasks/check_cluster.yml
+
+- name: Deploy kafka
+  hosts: kafka
+  become: yes
+  roles:
+    - kafka
+
+- name: Deploy kafka-ui
+  hosts: kafka-ui
+  become: yes
+  roles:
+    - kafka-ui

@@ -1,0 +1,10 @@
+---
+# handlers file for kafka-ui
+- name: Restart kafka UI
+  community.docker.docker_compose_v2:
+    project_src: /opt/
+    files: kafka-ui-docker-compose.yml
+    state: restarted
+    wait: true
+    wait_timeout: 15
+  register: output

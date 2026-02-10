@@ -1,0 +1,35 @@
+---
+# tasks file for kafka
+- name: Copy Kafka Docker Compose file
+  template:
+    src: kafka-docker-compose.yml
+    dest: /opt/kafka-docker-compose.yml
+    mode: "0644"
+  # notify:
+  #   - Restart kafka
+
+- name: Start Kafka service
+  community.docker.docker_compose_v2:
+    project_src: /opt/
+    files: kafka-docker-compose.yml
+    wait: true
+    wait_timeout: 15
+  register: output
+
+# - name: Flush handlers
+#   meta: flush_handlers
+
+- name: Verify that kafka is running
+  ansible.builtin.assert:
+    that:
+      - kafka_container.State == 'running'
+  vars:
+    kafka_container: >-
+      {{ output.containers | selectattr("Service", "match", "kafka") | first }}
+
+- name: Wait for Kafka to be ready
+  wait_for:
+    host: "{{ ansible_host }}"
+    port: "{{ kafka_port }}"
+    state: started
+    timeout: 300

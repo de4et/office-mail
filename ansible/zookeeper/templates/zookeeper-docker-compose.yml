@@ -1,0 +1,29 @@
+services:
+  zookeeper:
+    image: {{ zookeeper_image }}
+    container_name: zookeeper{{ groups['zookeeper'].index(inventory_hostname) + 1 }}
+    hostname: zookeeper-{{ ansible_host | replace('.', '-') }}
+    environment:
+      ZOO_MY_ID: {{ groups['zookeeper'].index(inventory_hostname) + 1 }}
+      ZOO_SERVERS: {{ zookeeper_servers }}
+      ZOO_CFG_EXTRA: |
+        quorumListenOnAllIPs=true
+        clientPort={{ zookeeper_client_port }}
+      ZOO_PORT: {{ zookeeper_client_port }}
+      ZOO_TICK_TIME: {{ zookeeper_tick_time }}
+      ZOO_INIT_LIMIT: {{ zookeeper_init_limit }}
+      ZOO_SYNC_LIMIT: {{ zookeeper_sync_limit }}
+      ZOO_STANDALONE_ENABLED: "false"
+    volumes:
+      - {{ zookeeper_data_dir }}:/data
+      - {{ zookeeper_datalog_dir }}:/datalog
+    restart: always
+    ports:
+      - {{ zookeeper_client_port }}:{{ zookeeper_client_port }}
+      - 2888:2888
+      - 3888:3888
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost {{ zookeeper_client_port }} || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5

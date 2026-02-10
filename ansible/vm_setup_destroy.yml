@@ -1,0 +1,47 @@
+---
+- hosts: vms
+  become: yes
+  tasks:
+    - name: Stop and remove all Docker containers
+      shell: docker container stop $(docker container ls -q) || true
+      register: stop_containers
+      ignore_errors: yes
+
+    - name: Remove all Docker containers
+      shell: docker container rm $(docker container ls -aq) || true
+      register: remove_containers
+      ignore_errors: yes
+
+    - name: Stop and remove Docker Compose services
+      shell: docker compose -f /opt/{{ item }}-docker-compose.yml down
+      args:
+        chdir: /opt
+      loop:
+        - zookeeper
+        - kafka
+      ignore_errors: yes
+      register: docker_compose_down
+      failed_when: docker_compose_down.rc != 0 and "'no such file or directory' not in docker_compose_down.stderr"
+
+    - name: Remove Docker volumes
+      shell: docker volume rm $(docker volume ls -q) || true
+      ignore_errors: yes
+      register: remove_volumes
+      failed_when: remove_volumes.rc != 0 and "'volume is in use' not in remove_volumes.stderr"
+
+    - name: Remove Zookeeper and Kafka directories
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /opt/zookeeper/data
+        - /opt/zookeeper/datalog
+        - /opt/kafka/data
+
+    - name: Remove Docker Compose files
+      file:
+        path: /opt/{{ item }}-docker-compose.yml
+        state: absent
+      loop:
+        - zookeeper
+        - kafka

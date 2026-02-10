@@ -1,0 +1,12 @@
+services:
+  kafka-ui:
+    image: {{ kafka_ui_image }}
+    container_name: kafka-ui
+    environment:
+      AUTH_TYPE: DISABLED
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: {{ kafka_ui_brokers }}
+      KAFKA_CLUSTERS_0_ZOOKEEPER: {{ kafka_zookeeper_connect }}
+    restart: always
+    ports:
+      - {{ kafka_ui_port }}:8080

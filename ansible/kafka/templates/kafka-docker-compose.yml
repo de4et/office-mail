@@ -1,0 +1,30 @@
+services:
+  kafka:
+    image: {{ kafka_image }}
+    container_name: kafkabroker{{ groups['kafka'].index(inventory_hostname) + 1 }}
+    hostname: kafka-{{ ansible_host | replace('.', '-') }}
+    environment:
+      KAFKA_BROKER_ID: {{ groups['kafka'].index(inventory_hostname) + 1 }}
+      KAFKA_ZOOKEEPER_CONNECT: {{ kafka_zookeeper_connect }}
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://{{ ansible_host }}:{{ kafka_port }}
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:{{ kafka_port }}
+      KAFKA_LOG_SEGMENT_BYTES: {{ kafka_log_segment_bytes }}
+      KAFKA_LOG_RETENTION_BYTES: {{ kafka_log_retention_bytes }}
+      # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # KAFKA_DEFAULT_REPLICATION_FACTOR: 1
+      KAFKA_LOG_RETENTION_MS: {{ kafka_log_retention_ms }}
+{% if kafka_heap_opts | length > 0 %}
+      KAFKA_HEAP_OPTS: "{{ kafka_heap_opts }}"
+{% endif %}
+      # KAFKA_OPTS: -javaagent:/usr/app/jmx_prometheus_javaagent-0.16.1.jar=9582:/usr/app/prometheus-config.yml
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+      # - /opt/jmx_prometheus_javaagent-0.16.1.jar:/usr/app/jmx_prometheus_javaagent-0.16.1.jar
+      - /opt/prometheus-config.yml:/usr/app/prometheus-config.yml
+    restart: always
+    ports:
+      - {{ kafka_port }}:{{ kafka_port }}
+      - 9582:9582
+volumes:
+  kafka_data:
