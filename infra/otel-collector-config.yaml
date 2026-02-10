@@ -1,0 +1,94 @@
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+  otlp/2:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+
+processors:
+  batch:
+  attributes/env:
+    actions:
+      - key: environment
+        value: production
+        action: insert
+
+  tail_sampling:
+    decision_wait: 10s
+    num_traces: 50000
+    expected_new_traces_per_sec: 1000
+    policies:
+      - name: errors-policy
+        type: status_code
+        status_code:
+          status_codes: [ERROR]
+
+      - name: slow-traces-policy
+        type: latency
+        latency:
+          threshold_ms: 2000
+
+      - name: probabilistic-policy
+        type: probabilistic
+        probabilistic:
+          sampling_percentage: 100
+
+  # filter:
+  #   error_mode: ignore
+  #   traces:
+  #     span:
+  #       - 'attributes["loh?"] == "da"'
+
+  memory_limiter:
+    check_interval: 5s
+    limit_mib: 4000
+    spike_limit_mib: 500
+
+exporters:
+  otlp:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: "office_mail"
+    const_labels:
+      service: "office-mail-service"
+
+  otlphttp/loki:
+    endpoint: "http://loki:3100/otlp"
+
+  debug:
+
+service:
+  telemetry:
+    logs:
+      level: "debug"
+    metrics:
+      level: detailed
+      readers:
+        - pull:
+            exporter:
+              prometheus:
+                host: "0.0.0.0"
+                port: 8888
+
+  pipelines:
+    traces:
+      receivers: [otlp, otlp/2]
+      processors: [batch, tail_sampling, attributes/env]
+      exporters: [debug, otlp]
+
+    metrics:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [prometheus]
+
+    logs:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [debug, otlphttp/loki]

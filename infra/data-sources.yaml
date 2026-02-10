@@ -1,0 +1,80 @@
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    type: prometheus
+    uid: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prometheus:9090
+    basicAuth: false
+    isDefault: false
+    version: 1
+    editable: false
+    jsonData:
+      httpMethod: GET
+
+  - name: Tempo
+    type: tempo
+    uid: tempo
+    access: proxy
+    orgId: 1
+    url: http://tempo:3200
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: false
+    apiVersion: 1
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: prometheus
+      tracesToLogsV2:
+        datasourceUid: loki # Link to Loki for log correlation
+        spanStartTimeShift: "-1h"
+        spanEndTimeShift: "1h"
+        filterByTraceID: true
+        filterBySpanID: true
+      nodeGraph:
+        enabled: true
+      search:
+        hide: false
+      lokiSearch:
+        datasourceUid: loki
+
+  # - name: Tempo
+  #   type: tempo
+  #   access: proxy
+  #   url: http://tempo:3200
+  #   isDefault: true
+  #   editable: true
+  #   jsonData:
+  #     httpMethod: GET
+  #     tracesToLogsV2:
+  #       datasourceUid: loki # Link to Loki for log correlation
+  #       spanStartTimeShift: "-1h"
+  #       spanEndTimeShift: "1h"
+  #       filterByTraceID: true
+  #       filterBySpanID: true
+  #     serviceMap:
+  #       datasourceUid: prometheus # Service graph metrics source
+  #     nodeGraph:
+  #       enabled: true
+  #     search:
+  #       hide: false
+  #     lokiSearch:
+  #       datasourceUid: loki
+
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://loki:3100
+    uid: loki
+    jsonData:
+      timeout: 60
+      maxLines: 1000
+      derivedFields:
+        - datasourceUid: tempo
+          matcherRegex: "\"trace_id\":\"(\\w+)\""
+          name: TraceID
+          url: "$${__value.raw}"
