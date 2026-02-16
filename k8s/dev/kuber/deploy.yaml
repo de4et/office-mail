@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: mossad-web
-          image: adv4000/k8sphp:version1
+          image: adv4000/k8sphp:version2
           ports:
             - containerPort: 80
           resources:
