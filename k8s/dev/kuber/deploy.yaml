@@ -3,7 +3,7 @@ kind: Deployment
 metadata:
   name: my-web-deployment-autoscaling
   labels:
-    app: my-k8s-application
+    app: my-k8s-application-1
     env: prod
     owner: TimurKa
 spec:
