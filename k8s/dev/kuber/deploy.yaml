@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: my-web-deployment-autoscaling
+  name: my-web-deployment-autoscaling-1
   labels:
     app: my-k8s-application-1
     env: prod
