@@ -35,3 +35,10 @@ func (c *TxClient) SelectContext(ctx context.Context, dest any, query string, ar
 	}
 	return c.db.SelectContext(ctx, dest, query, args...)
 }
+
+func (c *TxClient) QueryContext(ctx context.Context, query string, args ...any) (*sql.Rows, error) {
+	if tx := extractTx(ctx); tx != nil {
+		return tx.QueryContext(ctx, query, args...)
+	}
+	return c.db.QueryContext(ctx, query, args...)
+}

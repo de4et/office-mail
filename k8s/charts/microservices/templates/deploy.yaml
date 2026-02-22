@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "microservice.fullname" . }}
+  labels:
+    env: {{ .Values.env }}
+    owner: {{ .Values.owner }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "microservice.name" . }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "microservice.name" . }}
+    spec:
+      containers:
+        - name: {{ include "microservice.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+          {{- if .Values.containerPort }}
+          ports:
+            - containerPort: {{ .Values.containerPort }}
+          {{- end }}
+
+          envFrom:
+            - configMapRef:
+                name: {{ .Values.configMapName }}
+            - secretRef:
+                name: {{ .Values.secretName }}
+
+          env:
+            - name: SERVICE_NAME
+              value: "{{ include "microservice.name" . }}"
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}

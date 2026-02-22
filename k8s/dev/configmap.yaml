@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mail-services-config
+data:
+  PORT: "8080"
+
+  DB_HOST: "192.168.122.1"
+  DB_PORT: "5432"
+  DB_DATABASE: "mail"
+
+  REDIS_HOST: "192.168.122.1"
+  REDIS_PORT: "6379"
+
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://192.168.122.1:4317"
+
+  KAFKA_MAIL_TOPIC: "mail-topic"
+  KAFKA_ADDRESSES: "192.168.122.217:9092,192.168.122.93:9092,192.168.122.250:9092"
+  KAFKA_CONSUMER_GROUP: "delivery-group"

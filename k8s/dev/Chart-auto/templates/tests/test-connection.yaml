@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "Chart-auto.fullname" . }}-test-connection"
+  labels:
+    {{- include "Chart-auto.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "Chart-auto.fullname" . }}:{{ .Values.service.port }}']
+  restartPolicy: Never

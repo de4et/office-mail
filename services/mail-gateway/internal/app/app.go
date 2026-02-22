@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 
 	"github.com/de4et/office-mail/pkg/logger"
 	pg "github.com/de4et/office-mail/pkg/postgres"
@@ -18,7 +19,7 @@ func Run(config Config) {
 
 	logger.SetupLog("", slog.LevelDebug)
 
-	tp, err := tracer.NewTraceProvider("mail-gateway")
+	tp, err := tracer.NewTraceProvider(os.Getenv("SERVICE_NAME"))
 	if err != nil {
 		panic(err)
 	}

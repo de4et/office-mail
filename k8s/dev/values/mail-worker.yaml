@@ -1,0 +1,25 @@
+nameOverride: mail-worker
+env: dev
+owner: TimurKa
+replicaCount: 1
+
+image:
+  repository: de4et/mail-worker
+  tag: latest
+
+# containerPort: 8080
+
+configMapName: mail-services-config
+secretName: mail-services-secret
+
+service:
+  type: ClusterIP
+  port: 80
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 100Mi
+  limits:
+    cpu: 200m
+    memory: 200Mi

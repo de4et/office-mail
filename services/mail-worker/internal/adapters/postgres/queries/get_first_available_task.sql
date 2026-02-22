@@ -7,4 +7,5 @@ from
 where
   status = 'new'
 limit
-  1;
+  $1
+FOR UPDATE SKIP LOCKED;
