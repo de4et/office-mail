@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"strings"
 
 	"github.com/de4et/office-mail/pkg/logger"
@@ -18,7 +19,7 @@ func Run(config Config) {
 	ctx := context.Background()
 	logger.SetupLog("", slog.LevelInfo)
 
-	tp, err := tracer.NewTraceProvider("delivery")
+	tp, err := tracer.NewTraceProvider(os.Getenv("SERVICE_NAME"))
 	if err != nil {
 		panic(err)
 	}

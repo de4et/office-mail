@@ -11,6 +11,7 @@ import (
 	"github.com/de4et/office-mail/services/mail-worker/internal/domain"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -22,11 +23,15 @@ var errUnknownType = errors.New("unknown event type")
 type KafkaTaskPublisher struct {
 	producer *kafka.Producer
 	topic    string
+	tr       trace.Tracer
 }
 
-func MustGetKafkaTaskPublisher(config Config) *KafkaTaskPublisher {
+func MustGetKafkaTaskPublisher(config Config, tr trace.Tracer) *KafkaTaskPublisher {
 	conf := &kafka.ConfigMap{
 		"bootstrap.servers": strings.Join(config.Addresses, ","),
+		// "linger.ms":         1,
+		// "acks":              1,
+		// "compression.type":  "none",
 	}
 
 	p, err := kafka.NewProducer(conf)
@@ -37,10 +42,14 @@ func MustGetKafkaTaskPublisher(config Config) *KafkaTaskPublisher {
 	return &KafkaTaskPublisher{
 		producer: p,
 		topic:    config.MailTopic,
+		tr:       tr,
 	}
 }
 
 func (p *KafkaTaskPublisher) PublishMailTask(ctx context.Context, task domain.OutboxTask, mail domain.Mail) error {
+	ctx, span := p.tr.Start(ctx, "taskPublisher.PublishMailTask")
+	defer span.End()
+
 	headers := make([]kafka.Header, 0)
 
 	carrier := propagation.MapCarrier{}
@@ -63,20 +72,22 @@ func (p *KafkaTaskPublisher) PublishMailTask(ctx context.Context, task domain.Ou
 		Headers:   headers,
 	}
 
-	kafkaChan := make(chan kafka.Event)
-	if err := p.producer.Produce(kafkaMsg, kafkaChan); err != nil {
-		return nil
+	// kafkaChan := make(chan kafka.Event)
+	// if err := p.producer.Produce(kafkaMsg, kafkaChan); err != nil {
+	if err := p.producer.Produce(kafkaMsg, nil); err != nil {
+		return err
 	}
 
-	e := <-kafkaChan
-	switch ev := e.(type) {
-	case *kafka.Message:
-		return nil
-	case kafka.Error:
-		return ev
-	default:
-		return errUnknownType
-	}
+	// e := <-kafkaChan
+	// switch ev := e.(type) {
+	// case *kafka.Message:
+	// 	return nil
+	// case kafka.Error:
+	// 	return ev
+	// default:
+	// 	return errUnknownType
+	// }
+	return nil
 }
 
 type payload struct {

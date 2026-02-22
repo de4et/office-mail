@@ -4,67 +4,67 @@ x-logging: &default-logging
     loki-url: http://localhost:3100/loki/api/v1/push
 
 services:
-  mail-gateway:
-    container_name: mail-gateway
-    logging: *default-logging
-    build:
-      context: .
-      target: mail-gateway-production
-    ports:
-      - ${PORT}:${PORT}
-    environment:
-      PORT: ${PORT}
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-      SERVICE_NAME: mail-gateway
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  mail-worker:
-    container_name: mail-worker
-    logging: *default-logging
-    build:
-      context: .
-      target: mail-worker-production
-    environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT}
-      DB_DATABASE: ${DB_DATABASE}
-      DB_USERNAME: ${DB_USERNAME}
-      DB_PASSWORD: ${DB_PASSWORD}
-      KAFKA_MAIL_TOPIC: ${KAFKA_MAIL_TOPIC}
-      KAFKA_ADDRESSES: ${KAFKA_ADDRESSES}
-      SERVICE_NAME: mail-worker
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-    depends_on:
-      postgres:
-        condition: service_healthy
-
-  delivery:
-    container_name: delivery
-    logging: *default-logging
-    build:
-      context: .
-      target: delivery-production
-    environment:
-      KAFKA_MAIL_TOPIC: ${KAFKA_MAIL_TOPIC}
-      KAFKA_ADDRESSES: ${KAFKA_ADDRESSES}
-      KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP}
-      REDIS_HOST: ${REDIS_HOST}
-      REDIS_PORT: ${REDIS_PORT}
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      SERVICE_NAME: delivery
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
+  # mail-gateway:
+  #   container_name: mail-gateway
+  #   logging: *default-logging
+  #   build:
+  #     context: .
+  #     target: mail-gateway-production
+  #   ports:
+  #     - ${PORT}:${PORT}
+  #   environment:
+  #     PORT: ${PORT}
+  #     DB_HOST: ${DB_HOST}
+  #     DB_PORT: ${DB_PORT}
+  #     DB_DATABASE: ${DB_DATABASE}
+  #     DB_USERNAME: ${DB_USERNAME}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #     SERVICE_NAME: mail-gateway
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #
+  # mail-worker:
+  #   container_name: mail-worker
+  #   logging: *default-logging
+  #   build:
+  #     context: .
+  #     target: mail-worker-production
+  #   environment:
+  #     DB_HOST: ${DB_HOST}
+  #     DB_PORT: ${DB_PORT}
+  #     DB_DATABASE: ${DB_DATABASE}
+  #     DB_USERNAME: ${DB_USERNAME}
+  #     DB_PASSWORD: ${DB_PASSWORD}
+  #     KAFKA_MAIL_TOPIC: ${KAFKA_MAIL_TOPIC}
+  #     KAFKA_ADDRESSES: ${KAFKA_ADDRESSES}
+  #     SERVICE_NAME: mail-worker
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #
+  # delivery:
+  #   container_name: delivery
+  #   logging: *default-logging
+  #   build:
+  #     context: .
+  #     target: delivery-production
+  #   environment:
+  #     KAFKA_MAIL_TOPIC: ${KAFKA_MAIL_TOPIC}
+  #     KAFKA_ADDRESSES: ${KAFKA_ADDRESSES}
+  #     KAFKA_CONSUMER_GROUP: ${KAFKA_CONSUMER_GROUP}
+  #     REDIS_HOST: ${REDIS_HOST}
+  #     REDIS_PORT: ${REDIS_PORT}
+  #     REDIS_PASSWORD: ${REDIS_PASSWORD}
+  #     SERVICE_NAME: delivery
+  #     OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
 
   postgres:
     image: postgres:latest
@@ -130,6 +130,7 @@ services:
       - "8889:8889"
       - "55679:55679"
       - "8888:8888"
+      - "4317:4317"
     volumes:
       - ./infra/otel-collector-config.yaml:/etc/otel-collector-config.yaml
 

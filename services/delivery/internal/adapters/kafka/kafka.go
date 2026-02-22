@@ -3,7 +3,6 @@ package kafka
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"log/slog"
 	"strings"
@@ -15,7 +14,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/propagation"
-	"go.opentelemetry.io/otel/trace"
 )
 
 const (
@@ -93,39 +91,6 @@ func serializeFromMessage(msg string) (domain.Mail, domain.OutboxTask, error) {
 		ID:          payload.TaskID,
 		AggregateID: payload.MailID,
 	}
-
-	return mail, task, nil
-}
-
-func (c *KafkaTaskConsumer) GetNextMailTask(ctx context.Context) (domain.Mail, domain.OutboxTask, error) {
-	kafkaMsg, err := c.consumer.ReadMessage(-1)
-	if err != nil {
-		return domain.Mail{}, domain.OutboxTask{}, err
-	}
-
-	mail, task, err := serializeFromMessage(string(kafkaMsg.Value))
-	if err != nil {
-		return mail, task, err
-	}
-
-	carrier := propagation.MapCarrier{}
-
-	for _, h := range kafkaMsg.Headers {
-		carrier[h.Key] = string(h.Value)
-	}
-	fmt.Printf("carrier: %v\n", carrier)
-
-	ctx = otel.GetTextMapPropagator().
-		Extract(ctx, carrier)
-
-	span := trace.SpanFromContext(ctx)
-	fmt.Printf("span.SpanContext().TraceID(): %v\n", span.SpanContext().TraceID())
-
-	span.SetAttributes(
-		attribute.String("messaging.system", "kafka"),
-		attribute.String("messaging.destination", c.topic),
-		attribute.Int("outbox.task_id", task.ID),
-	)
 
 	return mail, task, nil
 }
