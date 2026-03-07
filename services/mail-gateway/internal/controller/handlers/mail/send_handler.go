@@ -9,13 +9,12 @@ import (
 )
 
 type SendHandler struct {
-	// TODO: logger
-	sendUC *usecase.SendMailUsecase
+	uc *usecase.MailUsecase
 }
 
-func NewSendHandler(sendUC *usecase.SendMailUsecase) *SendHandler {
+func NewSendHandler(uc *usecase.MailUsecase) *SendHandler {
 	return &SendHandler{
-		sendUC: sendUC,
+		uc: uc,
 	}
 }
 
@@ -36,7 +35,7 @@ func (h *SendHandler) Handle(c *gin.Context) {
 		return
 	}
 
-	if err := h.sendUC.Send(
+	if err := h.uc.Send(
 		c.Request.Context(),
 		domain.Mail{
 			To:   domain.Address(req.To),
