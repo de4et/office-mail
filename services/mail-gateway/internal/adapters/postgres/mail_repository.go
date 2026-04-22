@@ -5,12 +5,16 @@ import (
 	_ "embed"
 
 	"github.com/de4et/office-mail/pkg/postgres"
+	"github.com/de4et/office-mail/services/mail-gateway/internal/adapters/postgres/dto"
 	"github.com/de4et/office-mail/services/mail-gateway/internal/domain"
 	"github.com/jmoiron/sqlx"
 )
 
 //go:embed queries/create_mail.sql
 var createMailQuery string
+
+//go:embed queries/get_last.sql
+var getLastQuery string
 
 type PostgresqlMailRepository struct {
 	client *postgres.TxClient
@@ -37,4 +41,25 @@ func (rep *PostgresqlMailRepository) CreateMail(ctx context.Context, mail domain
 	}
 
 	return id, nil
+}
+
+func (rep *PostgresqlMailRepository) GetWithLimitAndOffset(ctx context.Context, from string, limit int, offset int) ([]domain.Mail, error) {
+	var res []dto.Mail
+	err := rep.client.SelectContext(
+		ctx,
+		&res,
+		getLastQuery,
+		from,
+		limit,
+		offset,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	mails := make([]domain.Mail, len(res))
+	for i := range res {
+		mails[i] = res[i].ToDomain()
+	}
+	return mails, nil
 }

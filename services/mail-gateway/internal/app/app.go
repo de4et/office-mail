@@ -43,8 +43,8 @@ func Run(config Config) {
 	mailRep := postgres.NewPostgresqlMailRepository(pgClient)
 	outboxRep := postgres.NewPostgresqlOutboxRepository(pgClient)
 
-	sendUC := usecase.NewSendMailUsecase(transactor, mailRep, outboxRep)
-	controller := controller.SetupRoutes(ctx, sendUC)
+	uc := usecase.NewMailUsecase(transactor, mailRep, outboxRep)
+	controller := controller.SetupRoutes(ctx, uc)
 
 	listenAddr := fmt.Sprintf(":%d", config.PORT)
 	controller.Listen(listenAddr)

@@ -19,7 +19,7 @@ type Controller struct {
 	server *http.Server
 }
 
-func SetupRoutes(ctx context.Context, sendUC *usecase.SendMailUsecase) *Controller {
+func SetupRoutes(ctx context.Context, uc *usecase.MailUsecase) *Controller {
 	controller := &Controller{
 		g:   gin.New(),
 		ctx: ctx,
@@ -38,11 +38,13 @@ func SetupRoutes(ctx context.Context, sendUC *usecase.SendMailUsecase) *Controll
 		AllowCredentials: true, // Enable cookies/auth
 	}))
 
-	send_handler := mailhandlers.NewSendHandler(sendUC)
+	send_handler := mailhandlers.NewSendHandler(uc)
+	getlast_handler := mailhandlers.NewGetLastHandler(uc)
 
-	// TODO: Middlewares(logger, metrics, tracing, auth) (propagate user in context)
+	// TODO: Middlewares(metrics, auth) (propagate user in context)
 	mailGroup := controller.g.Group("/mail/")
 	mailGroup.POST("/send", send_handler.Handle)
+	mailGroup.GET("/getlast", getlast_handler.Handle)
 
 	return controller
 }

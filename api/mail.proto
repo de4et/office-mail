@@ -1,0 +1,23 @@
+syntax = "proto3"
+package mail;
+
+option go_package = "github.com/de4et/office-mail/api"
+
+service MailDelivery {
+  rpc GetDeliveryStatus(DeliveryStatusRequest) returns (DeliveryStatus) {}
+}
+
+message DeliveryStatusRequest {
+  int mailID = 1;
+}
+
+enum Status {
+  STATUS_FAILED = 0;
+  STATUS_IN_PROGRESS = 1;
+  STATUS_SUCCESS = 1;
+}
+
+message DeliveryStatus {
+  int mailID = 1;
+  Status status = 2;
+}
